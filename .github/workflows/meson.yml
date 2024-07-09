@@ -21,7 +21,7 @@ jobs:
           \meson\bin\meson.cmd --help
 
           $ENV:PATH="/meson/bin;$ENV:PATH"
-          meson --version || true
+          meson --version
           if: ${{matrix.os == 'windows-latest'}}
           env:
             prefix: "win64"
