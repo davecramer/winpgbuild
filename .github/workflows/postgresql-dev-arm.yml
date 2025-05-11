@@ -1,0 +1,116 @@
+name: Build PostgreSQL (Dev ARM64)
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  schedule:
+    - cron: "00 04 * * *"
+    
+jobs:
+
+  get-versions:
+    uses: ./.github/workflows/manifest.yml
+    with:
+      config-path: manifest.json
+
+  build-postgresql-dev:
+    needs: get-versions
+    strategy:
+      fail-fast: false
+    env:
+      POSTGRESQL-DEV_VERSION: ${{needs.get-versions.outputs.POSTGRESQL-DEV_VERSION}}
+
+    runs-on: windows-11-arm
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: clangarm64
+          update: true
+          install:  mingw-w64-clang-aarch64-gcc-compat mingw-w64-clang-aarch64-icu mingw-w64-clang-aarch64-gettext-tools mingw-w64-clang-aarch64-gettext-runtime mingw-w64-clang-aarch64-libiconv mingw-w64-clang-aarch64-libxml2 mingw-w64-clang-aarch64-libxslt mingw-w64-clang-aarch64-meson mingw-w64-clang-aarch64-ninja mingw-w64-clang-aarch64-openssl mingw-w64-clang-aarch64-lz4 mingw-w64-clang-aarch64-pkgconf mingw-w64-clang-aarch64-zlib mingw-w64-clang-aarch64-zstd mingw-w64-clang-aarch64-gcc-compat mingw-w64-x86_64-jq
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+            repository: postgres/postgres
+            path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
+            ref: ${{ env.POSTGRESQL-DEV_VERSION }}
+      - name: Configure
+        run: |
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
+
+          # don't use \path style paths for library search, link.exe ends up
+          # interpreting paths like that as flags!
+          $deps = resolve-path /builddeps
+
+          # can't enable some extra tests
+          # - libpq_encryption -> fails for unknown reasons
+          # - kerberos -> test not yet supported on windows
+          # - load_balance -> would need to set up hostnames
+          meson setup `
+              --prefix=\postgresql `
+              "--cmake-prefix-path=${deps}" `
+              "--pkg-config-path=${deps}\lib\pkgconfig" `
+              "-Dextra_include_dirs=${deps}\include" `
+              "-Dextra_lib_dirs=${deps}\lib,${deps}\lib\amd64" `
+              "-DPG_TEST_EXTRA=ldap ssl" `
+              -Duuid=ossp `
+              -Db_pch=true `
+              -Dgssapi=disabled `
+              -Dbuildtype=debugoptimized `
+              build
+
+      - name: Build
+        run: |
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
+          ninja -j 1
+
+      - name: Test
+        run: |
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
+
+          # use unix socket to prevent port conflicts
+          $env:PG_TEST_USE_UNIX_SOCKETS = 1;
+          # otherwise pg_regress insists on creating the directory and does it
+          # in a non-existing place, this needs to be fixed :(
+          mkdir d:/sockets
+          $env:PG_REGRESS_SOCK_DIR = "d:/sockets/"
+
+          meson test --timeout-multiplier 2
+
+      - name: Upload Test Results
+        if: ${{ !success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_logs
+          path: |
+            postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\testrun\**\*.log
+            postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\testrun\**\regress_log_*
+            postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\testrun\**\*.diffs
+            postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\testrun\**\*.out
+            postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\meson-logs\testlog.txt
+
+      - name: Install
+        run: |
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
+          meson install --quiet
+
+      - name: Upload Source
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: postgresql-dev-${{ env.POSTGRESQL-DEV_VERSION }}-src
+          path: postgresql-dev-${{ env.POSTGRESQL-DEV_VERSION }}.tar.gz
+
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: postgresql-dev-${{ env.POSTGRESQL-DEV_VERSION }}-win64
+          path: /postgresql
+
+      - name: Upload Meson Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: meson_log
+          path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\meson-logs\meson-log.txt
