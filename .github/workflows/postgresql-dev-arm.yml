@@ -44,8 +44,8 @@ jobs:
           # - libpq_encryption -> fails for unknown reasons
           # - kerberos -> test not yet supported on windows
           # - load_balance -> would need to set up hostnames
-          meson setup
-              --prefix=\postgresql
+          meson setup `
+              --prefix=\postgresql `
               -Dbuildtype=debugoptimized `
               build
 
