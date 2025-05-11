@@ -39,22 +39,13 @@ jobs:
 
           # don't use \path style paths for library search, link.exe ends up
           # interpreting paths like that as flags!
-          $deps = resolve-path /builddeps
-
+          
           # can't enable some extra tests
           # - libpq_encryption -> fails for unknown reasons
           # - kerberos -> test not yet supported on windows
           # - load_balance -> would need to set up hostnames
           meson setup `
-              --prefix=\postgresql `
-              "--cmake-prefix-path=${deps}" `
-              "--pkg-config-path=${deps}\lib\pkgconfig" `
-              "-Dextra_include_dirs=${deps}\include" `
-              "-Dextra_lib_dirs=${deps}\lib,${deps}\lib\amd64" `
-              "-DPG_TEST_EXTRA=ldap ssl" `
-              -Duuid=ossp `
-              -Db_pch=true `
-              -Dgssapi=disabled `
+              --prefix=\postgresql
               -Dbuildtype=debugoptimized `
               build
 
