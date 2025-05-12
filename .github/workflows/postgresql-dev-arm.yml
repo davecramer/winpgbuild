@@ -33,6 +33,9 @@ jobs:
             repository: postgres/postgres
             path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
             ref: ${{ env.POSTGRESQL-DEV_VERSION }}
+      - name: ShowPath
+        run: write-host $env:path 
+        
       - name: Configure
         run: |
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
