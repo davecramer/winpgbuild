@@ -34,7 +34,9 @@ jobs:
             path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
             ref: ${{ env.POSTGRESQL-DEV_VERSION }}
       - name: ShowPath
-        run: write-host $env:path 
+        run: | 
+          write-host $env:path
+          dir c:\Program Files\Git\clangarm64\bin 
         
       - name: Configure
         run: |
