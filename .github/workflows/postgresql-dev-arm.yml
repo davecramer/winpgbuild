@@ -53,7 +53,7 @@ jobs:
       - name: ShowPath
         run: | 
           write-host $env:path
-          dir "c:\Program Files\Git\clangarm64\bin" 
+          dir "\clangarm64\bin" 
         
       - name: Configure
         run: |
