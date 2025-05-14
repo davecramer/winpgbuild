@@ -29,6 +29,8 @@ jobs:
           install:
              bison
              flex
+             meson
+             ninja
              mingw-w64-clang-aarch64-gcc-compat
              mingw-w64-clang-aarch64-icu
              mingw-w64-clang-aarch64-gettext-tools
@@ -48,11 +50,6 @@ jobs:
         with:
           python-version: '3.x'
          
-      - name: Install Meson and Ninja
-        run: |
-          pip install meson ninja
-          meson --version
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -61,7 +58,9 @@ jobs:
             ref: ${{ env.POSTGRESQL-DEV_VERSION }}
         
       - name: Configure
+        shell: msys2 {0}
         run: |
+          set MSYSTEM=CLANGARM64
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
 
           # don't use \path style paths for library search, link.exe ends up
@@ -77,12 +76,16 @@ jobs:
               build
 
       - name: Build
+        shell: msys2 {0}
         run: |
+          set MSYSTEM=CLANGARM64
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
           ninja -j 1
 
       - name: Test
+        shell: msys2 {0}
         run: |
+          set MSYSTEM=CLANGARM64
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
 
           # use unix socket to prevent port conflicts
@@ -107,7 +110,9 @@ jobs:
             postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\meson-logs\testlog.txt
 
       - name: Install
+        shell: msys2 {}
         run: |
+          set MSYSTEM=CLANGARM64
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
           meson install --quiet
 
