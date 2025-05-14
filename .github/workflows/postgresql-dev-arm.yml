@@ -27,6 +27,8 @@ jobs:
           msystem: clangarm64
           update: true
           install:
+             bison
+             flex
              mingw-w64-clang-aarch64-gcc-compat
              mingw-w64-clang-aarch64-icu
              mingw-w64-clang-aarch64-gettext-tools
