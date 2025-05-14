@@ -34,8 +34,6 @@ jobs:
              mingw-w64-clang-aarch64-libiconv
              mingw-w64-clang-aarch64-libxml2
              mingw-w64-clang-aarch64-libxslt
-             mingw-w64-clang-aarch64-meson
-             mingw-w64-clang-aarch64-ninja
              mingw-w64-clang-aarch64-openssl
              mingw-w64-clang-aarch64-lz4
              mingw-w64-clang-aarch64-pkgconf
@@ -59,10 +57,6 @@ jobs:
             repository: postgres/postgres
             path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
             ref: ${{ env.POSTGRESQL-DEV_VERSION }}
-      - name: ShowPath
-        run: | 
-          write-host $env:path
-          dir "c:\Program Files\Git\clangarm64\bin"
         
       - name: Configure
         run: |
@@ -76,7 +70,7 @@ jobs:
           # - kerberos -> test not yet supported on windows
           # - load_balance -> would need to set up hostnames
           meson setup `
-              --prefix=\postgresql `
+              --prefix=c:\postgresql `
               -Dbuildtype=debugoptimized `
               build
 
