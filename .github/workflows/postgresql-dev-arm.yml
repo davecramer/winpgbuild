@@ -62,8 +62,8 @@ jobs:
           set MSYSTEM=CLANGARM64
           curl -o clangarm64.patch https://github.com/msys2/MINGW-packages/blob/master/mingw-w64-postgresql/postgresql-14.0-use-mingw-setjmp-on-ucrt.patch
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
-          patch -p1 < clangarm64.patch
-            
+          patch -p1 < ../clangarm64.patch
+
       - name: Configure
         shell: msys2 {0}
         run: |
