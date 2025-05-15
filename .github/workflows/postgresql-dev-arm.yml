@@ -99,7 +99,7 @@ jobs:
           # otherwise pg_regress insists on creating the directory and does it
           # in a non-existing place, this needs to be fixed :(
           mkdir d:\sockets
-          export PG_REGRESS_SOCK_DIR="d:\sockets\"
+          export PG_REGRESS_SOCK_DIR="d:\sockets\\"
 
           meson test --timeout-multiplier 2
 
