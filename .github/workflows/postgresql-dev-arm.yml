@@ -29,6 +29,7 @@ jobs:
           install:
              bison
              flex
+             patch
              mingw-w64-clang-aarch64-meson
              mingw-w64-clang-aarch64-ninja
              mingw-w64-clang-aarch64-gcc-compat
