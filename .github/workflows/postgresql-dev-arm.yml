@@ -142,4 +142,4 @@ jobs:
         with:
           if-no-files-found: error
           name: meson_log
-          path: build\meson-logs\meson-log.txt
+          path: postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build\meson-logs\meson-log.txt
