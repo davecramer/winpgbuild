@@ -30,6 +30,7 @@ jobs:
              bison
              flex
              patch
+             mingw-w64-clang-aarch64-diffutils
              mingw-w64-clang-aarch64-perl
              mingw-w64-clang-aarch64-meson
              mingw-w64-clang-aarch64-ninja
