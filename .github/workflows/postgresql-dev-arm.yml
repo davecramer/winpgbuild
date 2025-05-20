@@ -51,11 +51,18 @@ jobs:
              mingw-w64-clang-aarch64-zstd
              mingw-w64-clang-aarch64-gcc-compat
              mingw-w64-x86_64-jq
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-         
+
+      - name: testhashlib
+        shell: msys2 {0} 
+        run: |
+          set MSYSTEM=CLANGARM64
+          python ./hashlib.py
+             
       - name: Checkout
         uses: actions/checkout@v4
         with:
