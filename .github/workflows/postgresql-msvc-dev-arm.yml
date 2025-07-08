@@ -8,8 +8,12 @@ on:
     
 jobs:
 
+  get-versions:
+    uses: ./.github/workflows/manifest.yml
+    with:
+      config-path: manifest.json
 
-  build-postgresql-dev:
+  build-postgresql-msvc-dev:
     needs: get-versions
     strategy:
       fail-fast: false
@@ -18,6 +22,9 @@ jobs:
 
     runs-on: windows-11-arm
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -26,34 +33,9 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1
         with:
-          msystem: clangarm64
-          update: true
-          install:
-             bison
-             flex
-             patch
-             mingw-w64-clang-aarch64-diffutils
-             mingw-w64-clang-aarch64-perl
-             mingw-w64-clang-aarch64-ninja
-             mingw-w64-clang-aarch64-gcc-compat
-             mingw-w64-clang-aarch64-icu
-             mingw-w64-clang-aarch64-gettext-tools
-             mingw-w64-clang-aarch64-gettext-runtime
-             mingw-w64-clang-aarch64-libiconv
-             mingw-w64-clang-aarch64-libxml2
-             mingw-w64-clang-aarch64-libxslt
-             mingw-w64-clang-aarch64-openssl
-             mingw-w64-clang-aarch64-python
-             mingw-w64-clang-aarch64-python-pyopenssl
-             mingw-w64-clang-aarch64-libressl
-             mingw-w64-clang-aarch64-lz4
-             mingw-w64-clang-aarch64-pkgconf
-             mingw-w64-clang-aarch64-zlib
-             mingw-w64-clang-aarch64-zstd
-             mingw-w64-clang-aarch64-gcc-compat
-             mingw-w64-x86_64-jq
-    
-      - name: Checkout
+          arch: arm64
+
+      - name: Checkout PostgreSQL
         uses: actions/checkout@v4
         with:
             repository: postgres/postgres
@@ -62,45 +44,32 @@ jobs:
     
 
       - name: Configure
-        shell: msys2 {0}
         run: |
-          set MSYSTEM=CLANGARM64
           cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
-
-          # don't use \path style paths for library search, link.exe ends up
-          # interpreting paths like that as flags!
           
-          # can't enable some extra tests
-          # - libpq_encryption -> fails for unknown reasons
-          # - kerberos -> test not yet supported on windows
-          # - load_balance -> would need to set up hostnames
-          meson setup build  
-          '-Dprefix=\\postgresql' `
-          "-Dlibxml=disabled" `
-          "-Dlibicu=disabled" `
-          "-Dlibedit=disabled" `
-          "-Dlibxslt=disabled" `
-          "-Dextra_lib_dirs='${{ github.workspace }}/vcpkg/installed/arm64-windows/bin'" `
-          "-Dextra_include_dirs='${{ github.workspace }}/vcpkg/installed/arm64-windows/include'" `
-          "-Dbuildtype=debugoptimized" `
-          "-Dpkg_config_path='${{ github.workspace }}/vcpkg/installed/arm64-windows/lib/pkgconfig/'" `
+          meson setup build `
+            --prefix=C:\postgresql `
+            --buildtype=debugoptimized `
+            -Dlibxml=enabled `
+            -Dlibicu=enabled `
+            -Dlibedit=disabled `
+            -Dlibxslt=enabled `
+            -Dopenssl=enabled `
+            -Dzlib=enabled `
+            -Dlz4=enabled `
+            -Dzstd=enabled `
+            -Dextra_lib_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib" `
+            -Dextra_include_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\include" `
+            -Dpkg_config_path="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib\pkgconfig"
           
       - name: Build
         run: |
-          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}/build
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
           ninja -j 1
 
       - name: Test
         run: |
-          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}/build
-
-          # use unix socket to prevent port conflicts
-          #export PG_TEST_USE_UNIX_SOCKETS=1
-          # otherwise pg_regress insists on creating the directory and does it
-          # in a non-existing place, this needs to be fixed :(
-          #mkdir d:\sockets
-          #export PG_REGRESS_SOCK_DIR="d:\sockets\\"
-
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
           meson test --timeout-multiplier 2
 
       - name: Upload Test Results
@@ -117,8 +86,12 @@ jobs:
 
       - name: Install
         run: |
-          build
+          cd postgresql-${{ env.POSTGRESQL-DEV_VERSION }}\build
           meson install --quiet
+
+      - name: Create Source Archive
+        run: |
+          tar -czf postgresql-dev-${{ env.POSTGRESQL-DEV_VERSION }}.tar.gz postgresql-${{ env.POSTGRESQL-DEV_VERSION }}
 
       - name: Upload Source
         uses: actions/upload-artifact@v4
@@ -132,7 +105,7 @@ jobs:
         with:
           if-no-files-found: error
           name: postgresql-dev-${{ env.POSTGRESQL-DEV_VERSION }}-arm64
-          path: /postgresql
+          path: C:\postgresql
 
       - name: Upload Meson Log
         if: always()
