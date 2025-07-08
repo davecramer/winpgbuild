@@ -1,4 +1,4 @@
-name: Build PostgreSQL (Dev ARM64)
+name: Build PostgreSQL (MSVC Dev ARM64)
 
 on:
   workflow_dispatch:
