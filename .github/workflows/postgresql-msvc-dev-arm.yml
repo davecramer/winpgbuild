@@ -30,6 +30,7 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgJsonGlob: '**/vcpkg.json'
+          runVcpkgInstall: true
 
       - uses: ilammy/msvc-dev-cmd@v1
         with:
