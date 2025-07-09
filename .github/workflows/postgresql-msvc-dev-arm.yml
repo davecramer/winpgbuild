@@ -25,9 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
         with:
-          arch: arm64
+          msbuild-architecture: arm64
       
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
